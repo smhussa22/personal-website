@@ -39,7 +39,7 @@ export const PROJECTS: Project[] = [
   },
   {
     name: 'SOCIS Website',
-    description: "Official website for the society representing University of Guelph's Bachelor of Computing.",
+    description: "Official website for UofG's B.Comp. academic society, handling thousands of requests.",
     link: 'https://socis.ca/',
     video:
       'https://res.cloudinary.com/read-cv/video/upload/t_v_b/v1/1/profileItems/W2azTw5BVbMXfj7F53G92hMVIn32/XSfIvT7BUWbPRXhrbLed/ee6871c9-8400-49d2-8be9-e32675eabf7e.mp4?_a=DATAdtAAZAA0',
@@ -51,7 +51,7 @@ export const PROJECTS: Project[] = [
     link: 'https://github.com/smhussa22/geckoai',
     video:
       'https://res.cloudinary.com/read-cv/video/upload/t_v_b/v1/1/profileItems/W2azTw5BVbMXfj7F53G92hMVIn32/XSfIvT7BUWbPRXhrbLed/ee6871c9-8400-49d2-8be9-e32675eabf7e.mp4?_a=DATAdtAAZAA0',
-    id: 'project2',
+    id: 'project3',
   },
 ]
 
@@ -80,10 +80,6 @@ export const SOCIAL_LINKS: SocialLink[] = [
   {
     label: 'LinkedIn',
     link: 'https://www.linkedin.com/in/syedmarhuss',
-  },
-  {
-    label: 'Instagram',
-    link: 'https://www.instagram.com/smaroofh',
   },
   {
     label: 'Resume',
