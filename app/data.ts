@@ -1,8 +1,16 @@
+type Badge = {
+  label: string
+  tooltip?: string
+  variant: 'gold' | 'blue'
+}
+
 type Project = {
   name: string
   description: string
   link: string
-  video: string
+  video?: string
+  image?: string
+  badge?: Badge
   id: string
 }
 
@@ -33,25 +41,36 @@ export const PROJECTS: Project[] = [
     description:
       'End-to-end, user-based, full-stack file uploading and sharing system.',
     link: 'https://github.com/smhussa22/filespark',
-    video:
-      'https://res.cloudinary.com/read-cv/video/upload/t_v_b/v1/1/profileItems/W2azTw5BVbMXfj7F53G92hMVIn32/newProfileItem/d898be8a-7037-4c71-af0c-8997239b050d.mp4?_a=DATAdtAAZAA0',
+    video: '/demos/filespark.mp4',
+    badge: { label: '100 users!', variant: 'blue' },
     id: 'project1',
+  },
+  {
+    name: 'Unchained',
+    description:
+      'Predictive forecasting tool that uses graph neural networks to visualize how local logistics disruptions cause cascading medical shortages at hospitals.',
+    link: 'https://github.com/smhussa22/unchained',
+    video: '/demos/unchained.mp4',
+    badge: {
+      label: 'Hackathon Winner',
+      tooltip: "Won WesternAI DataQuest '26",
+      variant: 'gold',
+    },
+    id: 'project2',
   },
   {
     name: 'SOCIS Website',
     description: "Official website for UofG's B.Comp. academic society, handling thousands of requests.",
     link: 'https://socis.ca/',
-    video:
-      'https://res.cloudinary.com/read-cv/video/upload/t_v_b/v1/1/profileItems/W2azTw5BVbMXfj7F53G92hMVIn32/XSfIvT7BUWbPRXhrbLed/ee6871c9-8400-49d2-8be9-e32675eabf7e.mp4?_a=DATAdtAAZAA0',
-    id: 'project2',
-  }, 
+    video: '/demos/socis.mp4',
+    id: 'project3',
+  },
   {
     name: 'GeckoAI',
     description: "Full-stack web application allowing users to automate tedious calendar scheduling.",
     link: 'https://github.com/smhussa22/geckoai',
-    video:
-      'https://res.cloudinary.com/read-cv/video/upload/t_v_b/v1/1/profileItems/W2azTw5BVbMXfj7F53G92hMVIn32/XSfIvT7BUWbPRXhrbLed/ee6871c9-8400-49d2-8be9-e32675eabf7e.mp4?_a=DATAdtAAZAA0',
-    id: 'project3',
+    image: '/geckoai.png',
+    id: 'project4',
   },
 ]
 
