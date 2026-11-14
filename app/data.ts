@@ -14,15 +14,6 @@ type Project = {
   id: string
 }
 
-type WorkExperience = {
-  company: string
-  title: string
-  start: string
-  end: string
-  link: string
-  id: string
-}
-
 type BlogPost = {
   title: string
   description: string
@@ -37,13 +28,26 @@ type SocialLink = {
 
 export const PROJECTS: Project[] = [
   {
+    name: 'NodeMonitor',
+    description: 'Placeholder description.',
+    link: '',
+    video: '/demos/nodemonitor.mp4',
+    id: 'project1',
+  },
+  {
+    name: 'OpenSocialNet',
+    description: 'Placeholder description.',
+    link: '',
+    id: 'project2',
+  },
+  {
     name: 'FileSpark',
     description:
       'End-to-end, user-based, full-stack file uploading and sharing system.',
     link: 'https://github.com/smhussa22/filespark',
     video: '/demos/filespark.mp4',
     badge: { label: '100 users!', variant: 'blue' },
-    id: 'project1',
+    id: 'project3',
   },
   {
     name: 'Unchained',
@@ -56,35 +60,8 @@ export const PROJECTS: Project[] = [
       tooltip: "Won WesternAI DataQuest '26",
       variant: 'gold',
     },
-    id: 'project2',
-  },
-  {
-    name: 'SOCIS Website',
-    description: "Official website for UofG's B.Comp. academic society, handling thousands of requests.",
-    link: 'https://socis.ca/',
-    video: '/demos/socis.mp4',
-    id: 'project3',
-  },
-  {
-    name: 'GeckoAI',
-    description: "Full-stack web application allowing users to automate tedious calendar scheduling.",
-    link: 'https://github.com/smhussa22/geckoai',
-    image: '/geckoai.png',
     id: 'project4',
   },
-]
-
-export const WORK_EXPERIENCE: WorkExperience[] = [
-
-  {
-    company: 'Society Of Computing and Information Sciences, University of Guelph',
-    title: 'Vice President, Technology',
-    start: '2025',
-    end: 'Present',
-    link: 'https://socis.ca',
-    id: 'work1',
-  },
-
 ]
 
 export const BLOG_POSTS: BlogPost[] = [

@@ -3,11 +3,9 @@
 import { motion } from 'motion/react'
 import Image from 'next/image'
 import { useEffect, useRef } from 'react'
-import { Spotlight } from '@/components/ui/spotlight'
 import { Magnetic } from '@/components/ui/magnetic'
 import {
   PROJECTS,
-  WORK_EXPERIENCE,
   EMAIL,
   SOCIAL_LINKS,
 } from './data'
@@ -33,7 +31,12 @@ const TRANSITION_SECTION = {
 
 const PLAYBACK_RATE = 1.75
 
-const RECENTLY_IMAGES = [1, 2, 3, 4]
+const RECENTLY_IMAGES = [
+  { n: 1, ext: 'jpg' },
+  { n: 2, ext: 'webp' },
+  { n: 4, ext: 'webp' },
+  { n: 5, ext: 'webp' },
+]
 
 function MagneticSocialLink({
   children,
@@ -197,58 +200,19 @@ export default function Personal() {
         </div>
       </motion.section>
 
-      {/* Experience */}
-      <motion.section variants={VARIANTS_SECTION} transition={TRANSITION_SECTION}>
-        <h3 className="mb-5 text-lg font-medium">Experience</h3>
-
-        <div className="flex flex-col space-y-2">
-          {WORK_EXPERIENCE.map((job) => (
-            <a
-              key={job.id}
-              className="relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
-              href={job.link}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Spotlight
-                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
-                size={64}
-              />
-
-              <div className="relative h-full w-full rounded-[15px] bg-white p-4 dark:bg-zinc-950">
-                <div className="relative flex w-full flex-row justify-between">
-                  <div>
-                    <h4 className="font-normal dark:text-zinc-100">
-                      {job.title}
-                    </h4>
-                    <p className="text-zinc-500 dark:text-zinc-400">
-                      {job.company}
-                    </p>
-                  </div>
-
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    {job.start} - {job.end}
-                  </p>
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      </motion.section>
-
       {/* Recently */}
       <motion.section variants={VARIANTS_SECTION} transition={TRANSITION_SECTION}>
         <h3 className="mb-5 text-lg font-medium">Recently..</h3>
 
         <div className="flex flex-wrap gap-4">
-          {RECENTLY_IMAGES.map((n) => (
+          {RECENTLY_IMAGES.map(({ n, ext }) => (
             <div
               key={n}
               className="relative h-[220px] overflow-hidden rounded-xl bg-zinc-50/40 p-1 ring-1 ring-zinc-200/50 ring-inset dark:bg-zinc-950/40 dark:ring-zinc-800/50"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`/recently/${n}.webp`}
+                src={`/recently/${n}.${ext}`}
                 alt={`Recent ${n}`}
                 className="h-full w-auto rounded-lg object-cover"
               />
