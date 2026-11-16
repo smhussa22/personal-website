@@ -37,26 +37,26 @@ type SocialLink = {
 export const PROJECTS: Project[] = [
   {
     name: 'NodeMonitor',
-    description: 'Placeholder description.',
-    link: '',
+    description: 'A network monitoring system with automated incident response, heavily inspired by Splunk.',
+    link: 'https://github.com/smhussa22/node-monitor',
     video: '/demos/nodemonitor.mp4',
     id: 'project1',
   },
   {
     name: 'Maroof Street',
-    description: 'Placeholder description.',
+    description: 'A distributed mini stock exchange built around my C++ matching engine, where simulated accounts trade real symbols using live market data.',
     link: 'https://github.com/smhussa22/maroof-street',
     id: 'project2',
   },
   {
     name: 'Matching Engine',
-    description: 'Placeholder description.',
+    description: 'A limit orderbook-based matching engine written in modern C++23, designed specifically for high throughput and low latency from cache-friendly data structures.',
     link: 'https://github.com/smhussa22/matching-engine',
     id: 'project5',
   },
   {
     name: 'maroof.net',
-    description: 'Placeholder description.',
+    description: 'A networking library that implements reliable-UDP transport in beautiful, modern C++23. "Connection oriented API like TCP... but message oriented like UDP"',
     link: 'https://github.com/smhussa22/maroof-net',
     id: 'project6',
   },
