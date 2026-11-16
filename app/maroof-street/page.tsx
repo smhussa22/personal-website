@@ -59,7 +59,13 @@ export default function MaroofStreet() {
   const now = useNow(skew)
 
   const closed = paused || market.failures >= 2
-  const state: MarketState = closed ? 'closed' : status.data?.open ? 'open' : 'connecting'
+  const state: MarketState = closed
+    ? 'closed'
+    : status.data?.mode === 'replay'
+      ? 'replay'
+      : status.data?.open
+        ? 'open'
+        : 'connecting'
 
   const stats = market.data?.symbols.find((s) => s.symbol === symbol)
   const bookData = book.data?.symbol === symbol ? book.data : null
@@ -85,7 +91,9 @@ export default function MaroofStreet() {
           <StatusPill state={state} />
         </div>
         <p className="mt-2 text-xs text-zinc-400">
-          Simulated market. Prices are made-up reference values, not real quotes.
+          {state === 'replay'
+            ? `Replaying a real session recorded ${status.data?.recordedAt?.slice(0, 10)}. The exchange itself is offline, so your orders are matched against the recorded book and marked simulated.`
+            : 'Simulated market. Prices are made-up reference values, not real quotes.'}
         </p>
       </motion.section>
 
@@ -132,7 +140,7 @@ export default function MaroofStreet() {
                 stats={stats}
                 pick={pick}
                 account={account.data}
-                disabled={state !== 'open'}
+                disabled={state !== 'open' && state !== 'replay'}
                 skew={skew}
                 onOrder={(o) => setOrders((prev) => [...prev, o])}
               />

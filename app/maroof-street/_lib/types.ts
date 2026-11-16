@@ -45,7 +45,7 @@ export type Trade = {
 
 export type Account = { cash: number; reserved: number; positions: Record<string, number> }
 export type TraderStat = { name: string; trades: number; volume: number; last_ts_ms: number | null }
-export type Status = { open: boolean; nextOpen?: string | null }
+export type Status = { open: boolean; nextOpen?: string | null; mode?: 'replay'; recordedAt?: string }
 
 export type OrderAck = {
   accepted?: boolean
@@ -74,4 +74,4 @@ export type MyOrder = {
   sentAt: number // server-clock ms
 }
 
-export type MarketState = 'connecting' | 'open' | 'closed'
+export type MarketState = 'connecting' | 'open' | 'closed' | 'replay'
