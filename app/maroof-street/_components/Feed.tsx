@@ -15,23 +15,29 @@ function Chip({ name }: { name: string | null }) {
 
 export function Feed({
   tape,
+  mineTrades,
   symbol,
   myIds,
   now,
 }: {
   tape: Trade[] | null
+  mineTrades: Trade[]
   symbol: SymbolName
   myIds: Set<number>
   now: number
 }) {
   const [filter, setFilter] = useState<Filter>('all')
+  // "hover to pause" freezes the unfiltered list; the filter is applied on top, so changing it always works
   const [frozen, setFrozen] = useState<Trade[] | null>(null)
 
   const isMine = (t: Trade) => myIds.has(t.taker_id ?? -1) || myIds.has(t.maker_id ?? -1)
-  const live = (tape ?? []).filter(
-    (t) => filter === 'all' || (filter === 'symbol' ? t.symbol === symbol : isMine(t)),
-  )
-  const rows = frozen ?? live
+  // your fills show up straight away; once the exchange's own tape carries them they are not added twice
+  const onTape = new Set((tape ?? []).map((t) => t.taker_id))
+  const extra = mineTrades.filter((t) => !onTape.has(t.taker_id))
+  const merged = [...extra, ...(tape ?? [])].sort((a, b) => (b.ts_ms ?? 0) - (a.ts_ms ?? 0))
+  const matches = (t: Trade) => filter === 'all' || (filter === 'symbol' ? t.symbol === symbol : isMine(t))
+  const rows = (frozen ?? merged).filter(matches)
+  const count = (f: Filter) => merged.filter((t) => f === 'all' || (f === 'symbol' ? t.symbol === symbol : isMine(t))).length
 
   const filters: { value: Filter; label: string }[] = [
     { value: 'all', label: 'Everything' },
@@ -52,7 +58,10 @@ export function Feed({
           {filters.map((f) => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value)}
+              onClick={() => {
+                setFilter(f.value)
+                setFrozen(null)
+              }}
               aria-pressed={filter === f.value}
               className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
                 filter === f.value
@@ -60,7 +69,7 @@ export function Feed({
                   : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
               }`}
             >
-              {f.label}
+              {f.label} <span className="opacity-60">{count(f.value)}</span>
             </button>
           ))}
         </div>
@@ -68,19 +77,23 @@ export function Feed({
 
       <div
         className="max-h-80 overflow-y-auto"
-        onMouseEnter={() => setFrozen(live)}
+        onMouseEnter={() => setFrozen(merged)}
         onMouseLeave={() => setFrozen(null)}
       >
         {rows.length === 0 ? (
           <p className="py-6 text-center text-sm text-zinc-400">
-            {filter === 'mine' ? 'Place an order and your trades show up here.' : 'Waiting for the first trade…'}
+            {filter === 'mine'
+              ? 'Place an order and your trades show up here.'
+              : filter === 'symbol'
+                ? `No recent ${symbol} trades yet.`
+                : 'Waiting for the first trade…'}
           </p>
         ) : (
           <ul className="space-y-1">
             <AnimatePresence initial={false}>
-              {rows.slice(0, 30).map((t) => (
+              {rows.slice(0, 30).map((t, i) => (
                 <motion.li
-                  key={`${t.ts_ms}-${t.taker_id}-${t.maker_id}-${t.qty}`}
+                  key={`${t.symbol}-${t.ts_ms}-${t.taker_id ?? 'x'}-${t.maker_id ?? 'x'}-${t.qty}-${t.price}-${i}`}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}
