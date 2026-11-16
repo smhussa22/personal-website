@@ -64,6 +64,7 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
     }
     setSubmitting(true)
     setMsg(null)
+    const sentAt = Date.now() + skew
     try {
       const res = await fetch('/api/maroof-street/order', {
         method: 'POST',
@@ -72,8 +73,8 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
       })
       const ack: OrderAck = await res.json()
       if (ack.accepted && ack.order_id) {
-        setMsg({ ok: true, text: 'Order accepted. Follow it through the exchange below.' })
-        onOrder({ id: ack.order_id, symbol, side, type, price: p, qty: q, sentAt: Date.now() + skew })
+        setMsg({ ok: true, text: 'Order accepted. Follow it just below.' })
+        onOrder({ id: ack.order_id, symbol, side, type, price: p, qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated })
         setCooldown(3)
       } else if (ack.accepted === undefined) {
         setMsg({ ok: false, text: friendlyReason({ reason: 'gateway_unavailable' }, symbol) })

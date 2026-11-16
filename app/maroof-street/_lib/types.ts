@@ -52,6 +52,7 @@ export type OrderAck = {
   reason?: string
   order_id?: number
   retry_after?: number
+  simulated?: boolean
   lo?: number
   hi?: number
 }
@@ -61,7 +62,7 @@ export type OrderState = {
   qty: number | null
   price: number | null
   filled: number
-  fills: { price: number; qty: number; ts_ms?: number; counterparty: string | null }[]
+  fills: { price: number; qty: number; ts_ms?: number; counterparty: string | null; house?: boolean }[]
 }
 
 export type MyOrder = {
@@ -71,7 +72,9 @@ export type MyOrder = {
   type: 'gtc' | 'fak'
   price: number
   qty: number
-  sentAt: number // server-clock ms
+  sentAt: number // server-clock ms, when the click happened
+  ackedAt: number // server-clock ms, when the exchange answered
+  simulated?: boolean
 }
 
 export type MarketState = 'connecting' | 'open' | 'closed' | 'replay'

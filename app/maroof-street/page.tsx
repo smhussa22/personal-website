@@ -10,6 +10,7 @@ import type {
   Market,
   MarketState,
   MyOrder,
+  OrderState,
   Status,
   SymbolName,
   TraderStat,
@@ -21,7 +22,7 @@ import { Ticker } from './_components/Ticker'
 import { DepthChart } from './_components/DepthChart'
 import { Ladder } from './_components/Ladder'
 import { OrderForm } from './_components/OrderForm'
-import { OrderJourney } from './_components/OrderJourney'
+import { YourOrder } from './_components/YourOrder'
 import { Feed } from './_components/Feed'
 import { Traders } from './_components/Traders'
 
@@ -48,7 +49,7 @@ export default function MaroofStreet() {
   const paused = status.data?.open === false || status.failures >= 2
   const live = (path: string) => (paused ? null : `${API}/${path}`)
   const market = usePoll<Market>(live('market'), 1500)
-  const tape = usePoll<Trade[]>(live('tape?limit=30'), 1500)
+  const tape = usePoll<Trade[]>(live('tape?limit=100'), 1500)
   const book = usePoll<Book>(live(`book/${symbol}?levels=10`), 1500)
   const account = usePoll<Account>(live('account'), 5000)
   const traders = usePoll<TraderStat[]>(live('traders'), 3000)
@@ -71,6 +72,29 @@ export default function MaroofStreet() {
   const bookData = book.data?.symbol === symbol ? book.data : null
   const myIds = useMemo(() => new Set(orders.map((o) => o.id)), [orders])
   const latest = orders[orders.length - 1] ?? null
+
+  // the newest order's fills, shared by the order panel, the book highlight and the activity feed
+  const orderState = usePoll<OrderState>(
+    latest && now - latest.sentAt < 60_000 ? `${API}/order/${latest.symbol}/${latest.id}` : null,
+    700,
+  )
+  const mine = latest && orderState.data?.known ? orderState.data : null
+  const myPrices = useMemo(
+    () => new Set(latest && latest.symbol === symbol && now - latest.sentAt < 30_000 ? [latest.price, ...(mine?.fills.map((f) => f.price) ?? [])] : []),
+    [latest, mine, symbol, now],
+  )
+  const myTrades: Trade[] = latest && mine
+    ? mine.fills.map((f) => ({
+        symbol: latest.symbol,
+        price: f.price,
+        qty: f.qty,
+        side: latest.side,
+        ts_ms: f.ts_ms,
+        taker: 'You',
+        maker: f.house ? 'demo liquidity' : f.counterparty,
+        taker_id: latest.id,
+      }))
+    : []
 
   return (
     <motion.main
@@ -131,7 +155,7 @@ export default function MaroofStreet() {
               </div>
               <div className={`${CARD} space-y-4`}>
                 <DepthChart book={bookData} />
-                <Ladder book={bookData} onPick={(price) => setPick({ price, n: Date.now() })} />
+                <Ladder book={bookData} mine={myPrices} onPick={(price) => setPick({ price, n: Date.now() })} />
               </div>
             </div>
             <div className="lg:col-span-2">
@@ -142,7 +166,10 @@ export default function MaroofStreet() {
                 account={account.data}
                 disabled={state !== 'open' && state !== 'replay'}
                 skew={skew}
-                onOrder={(o) => setOrders((prev) => [...prev, o])}
+                onOrder={(o) => {
+                  setOrders((prev) => [...prev, o])
+                  setTimeout(() => document.getElementById('your-order')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
+                }}
               />
             </div>
           </motion.section>
@@ -150,12 +177,12 @@ export default function MaroofStreet() {
       )}
 
       <motion.section variants={VARIANTS_SECTION} transition={TRANSITION}>
-        <OrderJourney order={closed ? null : latest} book={bookData} now={now} />
+        <YourOrder order={closed ? null : latest} state={orderState.data} />
       </motion.section>
 
       {!closed && (
         <motion.section variants={VARIANTS_SECTION} transition={TRANSITION}>
-          <Feed tape={tape.data} symbol={symbol} myIds={myIds} now={now} />
+          <Feed tape={tape.data} mineTrades={myTrades} symbol={symbol} myIds={myIds} now={now} />
         </motion.section>
       )}
 
