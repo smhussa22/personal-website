@@ -28,8 +28,10 @@ type Ctx = { params: Promise<{ path: string[] }> }
 // The exchange being down is a normal state for the demo, so failures become a closed market, not a 500.
 async function forward(path: string, init: RequestInit, ip = 'unknown', visitor = '') {
   try {
+    // the visitor id lets the exchange keep each person's wallet and orders apart
     const res = await fetch(`${EXCHANGE_URL}/${path}`, {
       ...init,
+      headers: { ...(init.headers as Record<string, string> | undefined), 'X-Visitor-Id': visitor },
       cache: 'no-store',
       signal: AbortSignal.timeout(4000),
     })

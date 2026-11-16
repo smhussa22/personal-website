@@ -63,6 +63,8 @@ export type OrderState = {
   price: number | null
   filled: number
   fills: { price: number; qty: number; ts_ms?: number; counterparty: string | null; house?: boolean }[]
+  // real timestamps the exchange recorded along the way (live mode only)
+  trace?: { received_ms: number | null; acked_ms: number | null; first_fill_ms: number | null; settled_ms: number | null }
 }
 
 export type MyOrder = {

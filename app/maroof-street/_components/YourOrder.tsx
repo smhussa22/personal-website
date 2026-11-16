@@ -93,13 +93,20 @@ export function YourOrder({ order, state }: { order: MyOrder | null; state: Orde
         order.side === 'buy' ? money(order.price * order.qty) : `${order.qty} shares`
       } were reserved. It was written to the log and sent to the ${order.symbol} engine.`,
     })
+    const trace = state?.trace
+    if (trace?.received_ms && trace.received_ms !== order.sentAt) {
+      log.push({ ts: trace.received_ms, node: 1, text: 'The HTTP gateway received it and checked the price, your wallet and the rate limit.' })
+    }
+    if (trace?.settled_ms) {
+      log.push({ ts: trace.settled_ms, node: 6, text: 'The ledger settled the trade and your wallet was updated.' })
+    }
     for (const f of fills) {
       log.push({
         ts: f.ts_ms ?? order.ackedAt,
         node: 4,
         text: `Matched ${f.qty} at ${money(f.price)} with ${
           f.house ? 'demo liquidity (the house)' : (f.counterparty ?? 'another trader')
-        }. The result went out as an event and the ledger settled it.`,
+        }.`,
       })
     }
   }

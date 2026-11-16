@@ -12,17 +12,12 @@ type Props = {
   onOrder: (o: MyOrder) => void
 }
 
-const TYPES = [
-  { value: 'gtc', label: 'Wait in the book', help: 'Your order waits in the book until someone trades against it.' },
-  { value: 'fak', label: 'Fill now or cancel', help: 'Matches what it can right now. Anything left over is cancelled.' },
-] as const
-
 const FIELD =
   'w-full rounded-lg bg-zinc-100 px-3 py-2 text-sm tabular-nums text-zinc-900 outline-none ring-zinc-400 placeholder:text-zinc-400 focus-visible:ring-2 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-600'
 
 export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrder }: Props) {
   const [side, setSide] = useState<'buy' | 'sell'>('buy')
-  const [type, setType] = useState<'gtc' | 'fak'>('gtc')
+  const type = 'gtc' as const // every demo order waits in the book; the house completes it
   const [price, setPrice] = useState('')
   const [qty, setQty] = useState('10')
   const [touched, setTouched] = useState(false)
@@ -90,7 +85,6 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
   }
 
   const blocked = disabled || submitting || cooldown > 0
-  const help = TYPES.find((t) => t.value === type)!.help
 
   return (
     <div className="space-y-4">
@@ -151,23 +145,10 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
           </div>
         </div>
 
-        <div role="group" aria-label="Order type" className="flex gap-1 rounded-full bg-zinc-100 p-1 dark:bg-zinc-800">
-          {TYPES.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setType(t.value)}
-              aria-pressed={type === t.value}
-              className={`flex-1 rounded-full px-2 py-1 text-xs transition-colors ${
-                type === t.value
-                  ? 'bg-white font-medium text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50'
-                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{help}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          Your order waits in the book at your price. In this demo it always completes: if nobody else is offering
+          that price, a house account takes the other side.
+        </p>
 
         <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
           <span>{side === 'buy' ? 'Estimated cost' : 'Estimated proceeds'}</span>
