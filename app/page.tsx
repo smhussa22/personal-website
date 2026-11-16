@@ -4,8 +4,10 @@ import { motion } from 'motion/react'
 import Image from 'next/image'
 import { useEffect, useRef } from 'react'
 import { Magnetic } from '@/components/ui/magnetic'
+import { Spotlight } from '@/components/ui/spotlight'
 import {
   PROJECTS,
+  OPEN_SOURCE,
   EMAIL,
   SOCIAL_LINKS,
 } from './data'
@@ -196,6 +198,42 @@ export default function Personal() {
                 </p>
               </div>
             </div>
+          ))}
+        </div>
+      </motion.section>
+
+      {/* Open source */}
+      <motion.section variants={VARIANTS_SECTION} transition={TRANSITION_SECTION}>
+        <h3 className="mb-5 text-lg font-medium">What I&apos;ve Worked On</h3>
+
+        <div className="flex flex-col space-y-2">
+          {OPEN_SOURCE.map((oss) => (
+            <a
+              key={oss.id}
+              className="relative overflow-hidden rounded-2xl bg-zinc-300/30 p-[1px] dark:bg-zinc-600/30"
+              href={oss.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Spotlight
+                className="from-zinc-900 via-zinc-800 to-zinc-700 blur-2xl dark:from-zinc-100 dark:via-zinc-200 dark:to-zinc-50"
+                size={64}
+              />
+              <div className="relative h-full w-full rounded-[15px] bg-white p-4 dark:bg-zinc-950">
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={oss.logo}
+                    alt=""
+                    className="h-8 w-8 shrink-0 rounded-md object-cover"
+                  />
+                  <h4 className="font-normal dark:text-zinc-100">{oss.name}</h4>
+                </div>
+                <p className="mt-2 text-zinc-500 dark:text-zinc-400">
+                  {oss.description}
+                </p>
+              </div>
+            </a>
           ))}
         </div>
       </motion.section>

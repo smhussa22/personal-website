@@ -14,6 +14,14 @@ type Project = {
   id: string
 }
 
+type OpenSource = {
+  name: string
+  description: string
+  link: string
+  logo: string
+  id: string
+}
+
 type BlogPost = {
   title: string
   description: string
@@ -35,10 +43,22 @@ export const PROJECTS: Project[] = [
     id: 'project1',
   },
   {
-    name: 'OpenSocialNet',
+    name: 'Maroof Street',
     description: 'Placeholder description.',
-    link: '',
+    link: 'https://github.com/smhussa22/maroof-street',
     id: 'project2',
+  },
+  {
+    name: 'Matching Engine',
+    description: 'Placeholder description.',
+    link: 'https://github.com/smhussa22/matching-engine',
+    id: 'project5',
+  },
+  {
+    name: 'maroof.net',
+    description: 'Placeholder description.',
+    link: 'https://github.com/smhussa22/maroof-net',
+    id: 'project6',
   },
   {
     name: 'FileSpark',
@@ -64,6 +84,33 @@ export const PROJECTS: Project[] = [
   },
 ]
 
+export const OPEN_SOURCE: OpenSource[] = [
+  {
+    name: 'Microsoft C++ Standard Library',
+    description:
+      'Optimized performance for algorithms in the std::ranges (C++20) library.',
+    link: 'https://github.com/microsoft/STL/pulls?q=is%3Apr+author%3Asmhussa22',
+    logo: '/logos/microsoft.png',
+    id: 'oss1',
+  },
+  {
+    name: 'Monero',
+    description:
+      'Patched a DNSSEC validation bypass in the C++ core of the cryptocurrency, closing a DNS poisoning attack.',
+    link: 'https://github.com/monero-project/monero/pulls?q=is%3Apr+author%3Asmhussa22',
+    logo: '/logos/monero-project.png',
+    id: 'oss2',
+  },
+  {
+    name: 'PcapPlusPlus',
+    description:
+      'Implemented Bluetooth HCI packet parsing, creation, and serialization, closing a 3-year-old feature request.',
+    link: 'https://github.com/seladb/PcapPlusPlus/pulls?q=is%3Apr+author%3Asmhussa22',
+    logo: '/logos/pcapplusplus.svg',
+    id: 'oss3',
+  },
+]
+
 export const BLOG_POSTS: BlogPost[] = [
 
 ]
@@ -79,8 +126,8 @@ export const SOCIAL_LINKS: SocialLink[] = [
   },
   {
     label: 'Resume',
-    link: '/Syed_Maroof_Hussain_Resume_Redacted.pdf',
+    link: '/Syed_Maroof_Hussain_Resume.pdf',
   },
 ]
 
-export const EMAIL = 'syedmarhuss@gmail.com'
+export const EMAIL = 'syedmaroofhuss@gmail.com'
