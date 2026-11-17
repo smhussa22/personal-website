@@ -54,6 +54,7 @@ export type OrderAck = {
   retry_after?: number
   simulated?: boolean
   price?: number // the price the order was actually placed at
+  resting?: boolean // a limit order waiting in the book for the market to reach it
   repriced_from?: number | null // the price the visitor asked for, when it was moved
   lo?: number
   hi?: number
@@ -66,14 +67,14 @@ export type OrderState = {
   filled: number
   fills: { price: number; qty: number; ts_ms?: number; counterparty: string | null; house?: boolean }[]
   // real timestamps the exchange recorded along the way (live mode only)
-  trace?: { received_ms: number | null; acked_ms: number | null; first_fill_ms: number | null; settled_ms: number | null }
+  trace?: { received_ms: number | null; acked_ms: number | null; first_fill_ms: number | null; settled_ms: number | null; swept_ms?: number | null; moved_to?: number | null }
 }
 
 export type MyOrder = {
   id: number
   symbol: SymbolName
   side: 'buy' | 'sell'
-  type: 'gtc' | 'fak'
+  type: 'market' | 'limit'
   price: number
   qty: number
   sentAt: number // server-clock ms, when the click happened

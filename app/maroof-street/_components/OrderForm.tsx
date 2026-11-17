@@ -17,7 +17,7 @@ const FIELD =
 
 export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrder }: Props) {
   const [side, setSide] = useState<'buy' | 'sell'>('buy')
-  const type = 'gtc' as const // every demo order waits in the book; the house completes it
+  const [type, setType] = useState<'market' | 'limit'>('market')
   const [price, setPrice] = useState('')
   const [qty, setQty] = useState('10')
   const [touched, setTouched] = useState(false)
@@ -50,7 +50,7 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
 
   const p = Number(price)
   const q = Number(qty)
-  const valid = Number.isInteger(p) && p > 0 && Number.isInteger(q) && q >= 1 && q <= 100
+  const valid = (type === 'market' ? suggested > 0 : Number.isInteger(p) && p > 0) && Number.isInteger(q) && q >= 1 && q <= 100
 
   const submit = async () => {
     if (!valid) {
@@ -64,17 +64,19 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
       const res = await fetch('/api/maroof-street/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, side, price: p, quantity: q, type }),
+        body: JSON.stringify({ symbol, side, price: type === 'market' ? suggested || p : p, quantity: q, type }),
       })
       const ack: OrderAck = await res.json()
       if (ack.accepted && ack.order_id) {
         setMsg({
           ok: true,
-          text: ack.repriced_from
+          text: ack.resting
+            ? `Your order is waiting in the book at ${money(ack.price ?? p)}. If the market does not reach it within about 12 seconds, it is moved to the nearest price that trades so it still completes. Follow it just below.`
+            : ack.repriced_from
             ? `Your price of ${money(ack.repriced_from)} was away from the market, so it was moved to ${money(ack.price ?? p)} to make sure it trades. Follow it just below.`
             : 'Order accepted. Follow it just below.',
         })
-        onOrder({ id: ack.order_id, symbol, side, type, price: ack.price ?? p, qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated })
+        onOrder({ id: ack.order_id, symbol, side, type, price: ack.price ?? (type === 'market' ? suggested : p), qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated })
         setCooldown(3)
       } else if (ack.accepted === undefined) {
         setMsg({ ok: false, text: friendlyReason({ reason: 'gateway_unavailable' }, symbol) })
@@ -115,8 +117,25 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
           ))}
         </div>
 
+        <div className="flex gap-2" role="group" aria-label="Order type">
+          {([['market', 'Market'], ['limit', 'Limit']] as const).map(([t, label]) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              aria-pressed={type === t}
+              className={`flex-1 rounded-full py-1 text-xs font-medium transition-colors ${
+                type === t
+                  ? 'bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900'
+                  : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex gap-2">
-          <div className="flex-1">
+          {type === 'limit' && <div className="flex-1">
             <label htmlFor="ms-price" className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
               Price per share ($)
             </label>
@@ -132,7 +151,7 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
               }}
               className={FIELD}
             />
-          </div>
+          </div>}
           <div className="flex-1">
             <label htmlFor="ms-qty" className="mb-1 block text-xs text-zinc-500 dark:text-zinc-400">
               Shares (1 to 100)
@@ -151,13 +170,15 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
         </div>
 
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Your order waits in the book at your price. In this demo it always completes: if nobody else is offering
-          that price, a house account takes the other side.
+          {type === 'market'
+            ? `Buys or sells right now at the best price in the book (${suggested ? money(suggested) : '—'} a share).`
+            : 'You pick the price. At or better than the market, it trades now. Otherwise it waits in the book, and if the market does not reach it in about 12 seconds it is moved to the nearest price that trades.'}
+          {' '}In this demo every order completes: if nobody else is offering that price, a house account takes the other side.
         </p>
 
         <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
           <span>{side === 'buy' ? 'Estimated cost' : 'Estimated proceeds'}</span>
-          <span className="tabular-nums">{valid ? money(p * q) : '—'}</span>
+          <span className="tabular-nums">{valid ? money((type === 'market' ? suggested : p) * q) : '—'}</span>
         </div>
 
         <button

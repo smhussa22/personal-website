@@ -40,15 +40,17 @@ type OrderBody = { symbol?: string; side?: string; price?: number; quantity?: nu
 
 export async function simOrder(body: OrderBody, ip: string, visitor: string) {
   const frame = simFrame()
-  const { symbol, side, price, quantity } = body
+  const { symbol, side, quantity } = body
   const book = symbol ? frame.books[symbol] : undefined
+  const bid = book?.bids[0]?.price
+  const ask = book?.asks[0]?.price
+  // a market order is priced by the exchange: the best price on the other side of the book
+  const price = body.type === 'market' ? (side === 'buy' ? ask : bid) : body.price
   if (!book || (side !== 'buy' && side !== 'sell') || !Number.isInteger(price) || !Number.isInteger(quantity)) {
     return { accepted: false, reason: 'invalid_order' }
   }
   if (quantity! < 1 || quantity! > 100 || price! < 1) return { accepted: false, reason: 'invalid_order' }
 
-  const bid = book.bids[0]?.price
-  const ask = book.asks[0]?.price
   const asked = price!
   const ref = bid && ask ? Math.floor((bid + ask) / 2) : (bid ?? ask)
   if (ref) {

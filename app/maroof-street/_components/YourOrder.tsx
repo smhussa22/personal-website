@@ -97,6 +97,13 @@ export function YourOrder({ order, state }: { order: MyOrder | null; state: Orde
     if (trace?.received_ms && trace.received_ms !== order.sentAt) {
       log.push({ ts: trace.received_ms, node: 1, text: 'The HTTP gateway received it and checked the price, your wallet and the rate limit.' })
     }
+    if (trace?.swept_ms) {
+      log.push({
+        ts: trace.swept_ms,
+        node: 4,
+        text: `The market did not reach your price in time, so the order was moved to ${money(trace.moved_to ?? order.price)}, the nearest price that trades.`,
+      })
+    }
     if (trace?.settled_ms) {
       log.push({ ts: trace.settled_ms, node: 6, text: 'The ledger settled the trade and your wallet was updated.' })
     }
@@ -129,7 +136,7 @@ export function YourOrder({ order, state }: { order: MyOrder | null; state: Orde
             <h2 className="mt-1 text-base font-medium">
               {matched
                 ? `Your order matched in ${duration(matchedIn ?? 0)}`
-                : 'Your order is at the matching engine…'}
+                : order.type === 'limit' && !state?.trace?.swept_ms ? 'Your order is waiting in the book…' : 'Your order is at the matching engine…'}
               {order.simulated && (
                 <span className="ml-2 rounded-full bg-sky-500/10 px-2 py-0.5 align-middle text-xs font-normal text-sky-700 dark:text-sky-300">
                   simulated fill
