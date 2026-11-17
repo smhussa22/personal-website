@@ -3,14 +3,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { usePoll, useNow } from './_lib/hooks'
+import { useMyOrders } from './_lib/myOrders'
 import { CARD, LABEL } from './_lib/format'
 import type {
   Account,
   Book,
   Market,
   MarketState,
-  MyOrder,
-  OrderState,
   Status,
   SymbolName,
   TraderStat,
@@ -41,7 +40,7 @@ const TRANSITION = { duration: 0.3 }
 export default function MaroofStreet() {
   const [symbol, setSymbol] = useState<SymbolName>('AAPL')
   const [pick, setPick] = useState<{ price: number; n: number } | null>(null)
-  const [orders, setOrders] = useState<MyOrder[]>([])
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [skew, setSkew] = useState(0)
 
   const status = usePoll<Status>(`${API}/status`, 5000)
@@ -70,31 +69,31 @@ export default function MaroofStreet() {
 
   const stats = market.data?.symbols.find((s) => s.symbol === symbol)
   const bookData = book.data?.symbol === symbol ? book.data : null
-  const myIds = useMemo(() => new Set(orders.map((o) => o.id)), [orders])
-  const latest = orders[orders.length - 1] ?? null
-
-  // the newest order's fills, shared by the order panel, the book highlight and the activity feed
-  const orderState = usePoll<OrderState>(
-    latest && now - latest.sentAt < 60_000 ? `${API}/order/${latest.symbol}/${latest.id}` : null,
-    700,
-  )
-  const mine = latest && orderState.data?.known ? orderState.data : null
+  const { items, add } = useMyOrders(API, now)
+  const myIds = useMemo(() => new Set(items.map((t) => t.order.id)), [items])
+  // the trade being followed: the one the visitor picked, else the newest
+  const chosen = items.find((t) => t.order.id === selectedId) ?? items[items.length - 1] ?? null
   const myPrices = useMemo(
-    () => new Set(latest && latest.symbol === symbol && now - latest.sentAt < 30_000 ? [latest.price, ...(mine?.fills.map((f) => f.price) ?? [])] : []),
-    [latest, mine, symbol, now],
+    () => new Set(chosen && chosen.order.symbol === symbol ? [chosen.order.price, ...(chosen.state?.fills.map((f) => f.price) ?? [])] : []),
+    [chosen, symbol],
   )
-  const myTrades: Trade[] = latest && mine
-    ? mine.fills.map((f) => ({
-        symbol: latest.symbol,
-        price: f.price,
-        qty: f.qty,
-        side: latest.side,
-        ts_ms: f.ts_ms,
-        taker: 'You',
-        maker: f.house ? 'demo liquidity' : f.counterparty,
-        taker_id: latest.id,
-      }))
-    : []
+  // every fill of every order the visitor has placed, so the activity feed never loses one
+  const myTrades: Trade[] = useMemo(
+    () =>
+      items.flatMap((t) =>
+        (t.state?.fills ?? []).map((f) => ({
+          symbol: t.order.symbol,
+          price: f.price,
+          qty: f.qty,
+          side: t.order.side,
+          ts_ms: f.ts_ms,
+          taker: 'You',
+          maker: f.house ? 'demo liquidity' : f.counterparty,
+          taker_id: t.order.id,
+        })),
+      ),
+    [items],
+  )
 
   return (
     <motion.main
@@ -166,8 +165,9 @@ export default function MaroofStreet() {
                 account={account.data}
                 disabled={state !== 'open' && state !== 'sim'}
                 skew={skew}
-                onOrder={(o) => {
-                  setOrders((prev) => [...prev, o])
+                onOrder={(o, firstState) => {
+                  add(o, firstState)
+                  setSelectedId(o.id)
                   setTimeout(() => document.getElementById('your-order')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
                 }}
               />
@@ -177,7 +177,7 @@ export default function MaroofStreet() {
       )}
 
       <motion.section variants={VARIANTS_SECTION} transition={TRANSITION}>
-        <YourOrder order={closed ? null : latest} state={orderState.data} />
+        <YourOrder items={items} selectedId={chosen?.order.id ?? null} onSelect={(id) => { setSelectedId(id); document.getElementById('your-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} />
       </motion.section>
 
       {!closed && (

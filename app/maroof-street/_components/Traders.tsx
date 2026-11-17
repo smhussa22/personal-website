@@ -24,7 +24,7 @@ const INFO: Record<string, { lang: string; what: string }> = {
   },
   Visitor: {
     lang: 'You',
-    what: 'Anyone on this page. All visitors share one demo account, so you may see trades you did not place.',
+    what: 'Anyone on this page. Each visitor has their own wallet, and all orders trade against the same market.',
   },
 }
 

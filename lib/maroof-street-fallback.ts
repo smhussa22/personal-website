@@ -92,5 +92,10 @@ export async function simOrder(body: OrderBody, ip: string, visitor: string) {
 
   const result = await applyOrder(visitor, { symbol: symbol!, side, price: limit, qty: quantity! }, fills, SIM_ID_BASE)
   if (!result.ok) return { accepted: false, reason: result.reason }
-  return { accepted: true, reason: '', order_id: result.id, simulated: true, price: limit, repriced_from: limit !== asked ? asked : null }
+  const filled = fills.reduce((n, f) => n + f.qty, 0)
+  const state = {
+    known: true, qty: quantity!, price: limit, filled, fills,
+    trace: { received_ms: now, acked_ms: now, first_fill_ms: now, settled_ms: now },
+  }
+  return { accepted: true, reason: '', order_id: result.id, simulated: true, price: limit, repriced_from: limit !== asked ? asked : null, state }
 }

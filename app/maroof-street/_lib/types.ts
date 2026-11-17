@@ -54,6 +54,7 @@ export type OrderAck = {
   retry_after?: number
   simulated?: boolean
   price?: number // the price the order was actually placed at
+  state?: OrderState // simulated orders come back already filled
   resting?: boolean // a limit order waiting in the book for the market to reach it
   repriced_from?: number | null // the price the visitor asked for, when it was moved
   lo?: number

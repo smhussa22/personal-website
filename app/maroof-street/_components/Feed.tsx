@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { BUY_TEXT, CARD, LABEL, SELL_TEXT, ago, money, traderStyle } from '../_lib/format'
 import type { SymbolName, Trade } from '../_lib/types'
+import { scrollBox } from './scroll'
 
 type Filter = 'all' | 'symbol' | 'mine'
 
@@ -30,12 +31,20 @@ export function Feed({
   // "hover to pause" freezes the unfiltered list; the filter is applied on top, so changing it always works
   const [frozen, setFrozen] = useState<Trade[] | null>(null)
 
-  const isMine = (t: Trade) => myIds.has(t.taker_id ?? -1) || myIds.has(t.maker_id ?? -1)
+  const isMine = (t: Trade) => myIds.has(t.taker_id ?? -1) || myIds.has(t.maker_id ?? -1) || t.taker === 'You'
   // your fills show up straight away; once the exchange's own tape carries them they are not added twice
-  const onTape = new Set((tape ?? []).map((t) => t.taker_id))
-  const extra = mineTrades.filter((t) => !onTape.has(t.taker_id))
+  const onTape = new Set((tape ?? []).map((t) => `${t.taker_id}-${t.ts_ms}-${t.qty}-${t.price}`))
+  const extra = mineTrades.filter((t) => !onTape.has(`${t.taker_id}-${t.ts_ms}-${t.qty}-${t.price}`))
   const merged = [...extra, ...(tape ?? [])].sort((a, b) => (b.ts_ms ?? 0) - (a.ts_ms ?? 0))
   const matches = (t: Trade) => filter === 'all' || (filter === 'symbol' ? t.symbol === symbol : isMine(t))
+  const seen = new Map<string, number>()
+  // a key built from the trade itself, so a new row at the top does not make every row below it animate again
+  const rowKey = (t: Trade) => {
+    const base = `${t.symbol}-${t.ts_ms}-${t.taker_id ?? 'x'}-${t.maker_id ?? 'x'}-${t.qty}-${t.price}`
+    const n = (seen.get(base) ?? 0) + 1
+    seen.set(base, n)
+    return n === 1 ? base : `${base}-${n}`
+  }
   const rows = (frozen ?? merged).filter(matches)
   const count = (f: Filter) => merged.filter((t) => f === 'all' || (f === 'symbol' ? t.symbol === symbol : isMine(t))).length
 
@@ -76,7 +85,7 @@ export function Feed({
       </div>
 
       <div
-        className="max-h-80 overflow-y-auto"
+        className={`${scrollBox} relative max-h-80 pr-1`}
         onMouseEnter={() => setFrozen(merged)}
         onMouseLeave={() => setFrozen(null)}
       >
@@ -91,9 +100,9 @@ export function Feed({
         ) : (
           <ul className="space-y-1">
             <AnimatePresence initial={false}>
-              {rows.slice(0, 30).map((t, i) => (
+              {rows.filter((t, i) => i < 30 || isMine(t)).map((t) => (
                 <motion.li
-                  key={`${t.symbol}-${t.ts_ms}-${t.taker_id ?? 'x'}-${t.maker_id ?? 'x'}-${t.qty}-${t.price}-${i}`}
+                  key={rowKey(t)}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}

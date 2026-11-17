@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BUY_TEXT, CARD, LABEL, SELL_TEXT, friendlyReason, int, money } from '../_lib/format'
-import type { Account, MyOrder, OrderAck, SymbolName, SymbolStats } from '../_lib/types'
+import type { Account, MyOrder, OrderAck, OrderState, SymbolName, SymbolStats } from '../_lib/types'
 
 type Props = {
   symbol: SymbolName
@@ -9,7 +9,7 @@ type Props = {
   account: Account | null
   disabled: boolean
   skew: number
-  onOrder: (o: MyOrder) => void
+  onOrder: (o: MyOrder, state: OrderState | null) => void
 }
 
 const FIELD =
@@ -76,7 +76,7 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
             ? `Your price of ${money(ack.repriced_from)} was away from the market, so it was moved to ${money(ack.price ?? p)} to make sure it trades. Follow it just below.`
             : 'Order accepted. Follow it just below.',
         })
-        onOrder({ id: ack.order_id, symbol, side, type, price: ack.price ?? (type === 'market' ? suggested : p), qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated })
+        onOrder({ id: ack.order_id, symbol, side, type, price: ack.price ?? (type === 'market' ? suggested : p), qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated }, ack.state ?? null)
         setCooldown(3)
       } else if (ack.accepted === undefined) {
         setMsg({ ok: false, text: friendlyReason({ reason: 'gateway_unavailable' }, symbol) })
@@ -201,9 +201,9 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
       </div>
 
       <div className={CARD}>
-        <p className={LABEL}>Shared demo account</p>
+        <p className={LABEL}>Your demo wallet</p>
         <p className="mb-2 mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Every visitor trades from this one account, so the numbers move even when you are not trading.
+          Everyone starts with $100,000 of pretend money. This wallet is only yours, and it changes when your orders fill.
         </p>
         <div className="flex justify-between text-sm">
           <span className="text-zinc-500 dark:text-zinc-400">Cash</span>
