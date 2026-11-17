@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { replayGet, replayOrder } from '@/lib/maroof-street-replay'
+import { simGet, simOrder } from '@/lib/maroof-street-fallback'
 
 const EXCHANGE_URL = process.env.EXCHANGE_URL ?? 'http://localhost:8080'
 const SYM = '(AAPL|TSLA|NVDA|MSFT|GOOGL)'
@@ -37,13 +37,13 @@ async function forward(path: string, init: RequestInit, ip = 'unknown', visitor 
     })
     return NextResponse.json(await res.json(), { status: res.status })
   } catch {
-    // no exchange: play back a recorded session if there is one, otherwise show the market as closed
+    // no exchange: run the simulated market
     const [route, search = ''] = path.split('?')
     if (init.method === 'POST') {
-      const sim = await replayOrder(JSON.parse(String(init.body)), ip, visitor)
+      const sim = await simOrder(JSON.parse(String(init.body)), ip, visitor)
       if (sim) return NextResponse.json(sim)
     } else {
-      const replay = await replayGet(route, search ? `?${search}` : '', visitor)
+      const replay = await simGet(route, search ? `?${search}` : '', visitor)
       if (replay) return NextResponse.json(replay)
     }
     const nextOpen = process.env.MARKET_NEXT_OPEN ?? null
