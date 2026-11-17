@@ -68,8 +68,13 @@ export function OrderForm({ symbol, stats, pick, account, disabled, skew, onOrde
       })
       const ack: OrderAck = await res.json()
       if (ack.accepted && ack.order_id) {
-        setMsg({ ok: true, text: 'Order accepted. Follow it just below.' })
-        onOrder({ id: ack.order_id, symbol, side, type, price: p, qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated })
+        setMsg({
+          ok: true,
+          text: ack.repriced_from
+            ? `Your price of ${money(ack.repriced_from)} was away from the market, so it was moved to ${money(ack.price ?? p)} to make sure it trades. Follow it just below.`
+            : 'Order accepted. Follow it just below.',
+        })
+        onOrder({ id: ack.order_id, symbol, side, type, price: ack.price ?? p, qty: q, sentAt, ackedAt: Date.now() + skew, simulated: ack.simulated })
         setCooldown(3)
       } else if (ack.accepted === undefined) {
         setMsg({ ok: false, text: friendlyReason({ reason: 'gateway_unavailable' }, symbol) })

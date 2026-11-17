@@ -49,11 +49,23 @@ export async function simOrder(body: OrderBody, ip: string, visitor: string) {
 
   const bid = book.bids[0]?.price
   const ask = book.asks[0]?.price
+  const asked = price!
   const ref = bid && ask ? Math.floor((bid + ask) / 2) : (bid ?? ask)
   if (ref) {
     const lo = Math.floor((ref * (100 - BAND_PCT)) / 100)
     const hi = Math.floor((ref * (100 + BAND_PCT)) / 100) + 1
     if (price! < lo || price! >= hi) return { accepted: false, reason: 'price_out_of_band', lo, hi }
+  }
+
+  // same rule as the real exchange: a price away from the market is moved to the nearest price that trades, because
+  // the house can only complete an order that sits at the front of the book
+  let limit = price!
+  if (side === 'buy' && bid && !(ask && limit >= ask)) {
+    limit = Math.max(limit, bid + 1)
+    if (ask && limit >= ask) limit = ask
+  } else if (side === 'sell' && ask && !(bid && limit <= bid)) {
+    limit = Math.min(limit, ask - 1)
+    if (bid && limit <= bid) limit = bid
   }
 
   const wait = await takeCooldown(`${ip}:${visitor}`, COOLDOWN_SECS)
@@ -65,7 +77,7 @@ export async function simOrder(body: OrderBody, ip: string, visitor: string) {
   let left = quantity!
   const fills: SimFill[] = []
   for (const level of levels) {
-    const crosses = side === 'buy' ? level.price <= price! : level.price >= price!
+    const crosses = side === 'buy' ? level.price <= limit : level.price >= limit
     if (!crosses || left === 0) break
     const take = Math.min(left, level.volume)
     fills.push({ price: level.price, qty: take, ts_ms: now, counterparty: SIM_MAKER })
@@ -74,9 +86,9 @@ export async function simOrder(body: OrderBody, ip: string, visitor: string) {
 
   // Demo guarantee: whatever the simulated book could not fill is taken by the house at the visitor's limit price,
   // so every visitor order ends fully filled and has a complete trade to show.
-  if (left > 0) fills.push({ price: price!, qty: left, ts_ms: now, counterparty: HOUSE, house: true })
+  if (left > 0) fills.push({ price: limit, qty: left, ts_ms: now, counterparty: HOUSE, house: true })
 
-  const result = await applyOrder(visitor, { symbol: symbol!, side, price: price!, qty: quantity! }, fills, SIM_ID_BASE)
+  const result = await applyOrder(visitor, { symbol: symbol!, side, price: limit, qty: quantity! }, fills, SIM_ID_BASE)
   if (!result.ok) return { accepted: false, reason: result.reason }
-  return { accepted: true, reason: '', order_id: result.id, simulated: true }
+  return { accepted: true, reason: '', order_id: result.id, simulated: true, price: limit, repriced_from: limit !== asked ? asked : null }
 }

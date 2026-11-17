@@ -53,6 +53,8 @@ export type OrderAck = {
   order_id?: number
   retry_after?: number
   simulated?: boolean
+  price?: number // the price the order was actually placed at
+  repriced_from?: number | null // the price the visitor asked for, when it was moved
   lo?: number
   hi?: number
 }
