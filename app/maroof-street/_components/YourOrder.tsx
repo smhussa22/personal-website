@@ -2,73 +2,74 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, Cpu, Database, Globe, Layers, Radio, ShieldCheck, User, Wallet } from 'lucide-react'
+import { Check, Cpu, Database, Globe, Layers, Radio, ShieldCheck, User, Wallet } from 'lucide-react'
 import { BUY_TEXT, CARD, LABEL, SELL_TEXT, money } from '../_lib/format'
 import { isDone, type Tracked } from '../_lib/myOrders'
 import { scrollBox } from './scroll'
 
 type Node = {
   icon: typeof User
-  title: string
-  short: string // one line under the box
+  title: string // the real component name
+  short: string // what it is doing, in plain words
   about: string // what this part is, in plain words
 }
 
-// The trip an order takes: out from you along the top, down into the matching engine, and back along the bottom to you.
+// The trip an order takes, in the order it happens. The diagram draws it as one ring: out along the top, down into the
+// matching engine, and back along the bottom to you.
 const NODES: Node[] = [
   {
     icon: User,
     title: 'You',
-    short: 'Send an order',
+    short: 'Press buy or sell',
     about: 'You choose a stock, buy or sell, and how many shares. Pressing the button sends that request to the exchange.',
   },
   {
     icon: Globe,
-    title: 'Front desk',
-    short: 'Checks it makes sense',
+    title: 'HTTP Gateway',
+    short: 'Checks your order makes sense',
     about:
       'The first stop, like a bank teller. It checks that the order is filled in properly, that the price is reasonable, that you have enough money or shares, and that you are not sending orders too fast. If something is wrong, it stops here.',
   },
   {
     icon: ShieldCheck,
-    title: 'Security check',
+    title: 'Order Gateway',
     short: 'Sets your money aside',
     about:
-      'A second check that you are allowed to trade. For a buy it puts the money aside, and for a sell it puts the shares aside, so the same money cannot be spent on two orders at once.',
+      'A C++ service that checks you are allowed to trade. For a buy it puts the money aside, and for a sell it puts the shares aside, so the same money cannot be spent on two orders at once.',
   },
   {
     icon: Layers,
-    title: 'Order list',
-    short: 'Writes it down',
+    title: 'Kafka · commands',
+    short: 'Writes your order down',
     about:
-      'Every order is written to a permanent list (this is Kafka) before anything else happens. If something crashes, the exchange reads this list and picks up exactly where it left off, so no order is lost.',
+      'Every order is written to a permanent list (Kafka) before anything else happens. If something crashes, the exchange reads this list and picks up exactly where it left off, so no order is lost.',
   },
   {
     icon: Cpu,
-    title: 'Matching engine',
-    short: 'Finds who to trade with',
+    title: 'Matching Engine',
+    short: 'Finds someone to trade with',
     about:
-      'The heart of the exchange. It looks for someone who wants the opposite of what you want, a seller for your buy or a buyer for your sell, at a price that works for both. It always picks the best price first, then whoever has been waiting longest. It does this in about a millionth of a second.',
+      'The heart of the exchange, written in C++. It looks for someone who wants the opposite of what you want, a seller for your buy or a buyer for your sell, at a price that works for both. It always picks the best price first, then whoever has been waiting longest. It does this in about a millionth of a second.',
   },
   {
     icon: Radio,
-    title: 'Results list',
+    title: 'Kafka · events',
     short: 'Announces what happened',
     about:
       'The engine does not phone anyone. It writes down what happened ("these two orders traded") on a second list, and every other part of the system reads it from there.',
   },
   {
     icon: Database,
-    title: 'Accountant',
+    title: 'Ledger',
     short: 'Moves the money',
     about:
-      'The ledger reads the results and moves the money and shares between the two traders. A separate service updates the order book and live feed on this page from the same results.',
+      'Reads the announcement and moves the money and shares between the two traders. A separate Market Data service reads the same announcement to update the order book and live feed on this page.',
   },
   {
     icon: Wallet,
-    title: 'Back to you',
+    title: 'You',
     short: 'Your wallet is updated',
-    about: 'The trade is done. Your cash and shares now show the result, and you can see it in your account.',
+    about: 'The trade is done. Your cash and shares now show the result, and you can see it in your wallet.',
   },
 ]
 
@@ -89,53 +90,120 @@ function duration(ms: number) {
 
 const AFTER = 750 // ms between steps when a finished trade is played back
 
-function Box({
-  i, state, picked, onPick, time,
-}: {
-  i: number
-  state: 'idle' | 'done' | 'active' | 'later'
-  picked: boolean
-  onPick: () => void
-  time: string | null
-}) {
+type BoxState = 'idle' | 'done' | 'active' | 'later'
+
+function Box({ i, state, picked, onPick }: { i: number; state: BoxState; picked: boolean; onPick: () => void }) {
   const n = NODES[i]
   const Icon = n.icon
   const tone =
     state === 'done'
-      ? 'border-emerald-500 bg-emerald-500/10'
+      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950'
       : state === 'active'
-        ? 'border-amber-400 bg-amber-400/10'
+        ? 'border-amber-400 bg-amber-50 dark:bg-amber-950'
         : 'border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900'
   return (
     <button
       onClick={onPick}
       aria-pressed={picked}
-      className={`relative flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-xl border-2 p-2 text-center transition-all duration-500 hover:shadow-md ${tone} ${
-        state === 'later' ? 'opacity-50' : ''
+      className={`relative flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-lg border-2 px-2 py-2 text-center shadow-sm transition-colors duration-500 hover:shadow-md ${tone} ${
+        state === 'later' ? 'text-zinc-400 dark:text-zinc-500' : ''
       } ${picked ? 'outline outline-2 outline-offset-2 outline-sky-400' : ''}`}
     >
-      <span className="absolute left-2 top-1.5 text-[10px] font-semibold tabular-nums text-zinc-400">{i + 1}</span>
       {state === 'active' && <span className="absolute right-2 top-2 h-2 w-2 animate-ping rounded-full bg-amber-400" />}
-      {state === 'done' ? (
-        <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-      ) : (
-        <Icon className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
-      )}
-      <span className="text-sm font-medium">{n.title}</span>
-      <span className="text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">{n.short}</span>
-      <span className="h-3 font-mono text-[10px] tabular-nums text-emerald-600 dark:text-emerald-400">
-        {state === 'done' && time ? time : ''}
+      <span className="flex items-center gap-1.5">
+        {state === 'done' ? (
+          <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        ) : (
+          <Icon className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
+        )}
+        <span className="text-[13px] font-semibold leading-tight">{n.title}</span>
       </span>
+      <span className="text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">{n.short}</span>
     </button>
   )
 }
 
-function Arrow({ dir, on }: { dir: 'right' | 'left' | 'up' | 'down'; on: boolean }) {
-  const I = { right: ArrowRight, left: ArrowLeft, up: ArrowUp, down: ArrowDown }[dir]
+// Where each box sits (as a percentage of the diagram). The ring is one closed line
+// through every box; it fills in as the order moves, and the last stretch is the line back into "You".
+type Layout = { pos: { x: number; y: number }[]; height: number; cols: number }
+
+const WIDE: Layout = {
+  height: 300,
+  cols: 4,
+  pos: [12.5, 37.5, 62.5, 87.5, 87.5, 62.5, 37.5, 12.5].map((x, i) => ({ x, y: i < 4 ? 20 : 80 })),
+}
+const NARROW: Layout = {
+  height: 480,
+  cols: 2,
+  pos: [12.5, 37.5, 62.5, 87.5, 87.5, 62.5, 37.5, 12.5].map((y, i) => ({ x: i < 4 ? 25 : 75, y })),
+}
+
+function Ring({
+  layout, reached, done, stateOf, shown, onPick, label,
+}: {
+  layout: Layout
+  reached: number
+  done: boolean // the whole trip is finished, so the line is closed back at You
+  stateOf: (i: number) => BoxState
+  shown: number | null
+  onPick: (i: number) => void
+  label: string | null
+}) {
+  const w = layout.cols === 4 ? 21 : 40 // box width, % of the diagram
+  const h = layout.cols === 4 ? 104 : 96 // box height, px
   return (
-    <span className="flex items-center justify-center">
-      <I className={`h-5 w-5 transition-colors duration-500 ${on ? 'text-emerald-500' : 'text-zinc-300 dark:text-zinc-700'}`} />
-    </span>
+    <div className="relative w-full" style={{ height: layout.height }}>
+      {/* one solid line between each pair of boxes, and a closing line from the last box back up into You */}
+      {NODES.map((_, i) => {
+        const from = layout.pos[i]
+        const to = layout.pos[(i + 1) % NODES.length]
+        const horizontal = from.y === to.y
+        const lit = i === NODES.length - 1 ? done : i + 1 <= reached
+        const grow = horizontal ? (to.x > from.x ? 'left' : 'right') : to.y > from.y ? 'top' : 'bottom'
+        return (
+          <div
+            key={`line-${i}`}
+            className="absolute overflow-hidden rounded-full bg-zinc-300 dark:bg-zinc-700"
+            style={{
+              left: `${Math.min(from.x, to.x)}%`,
+              top: `${Math.min(from.y, to.y)}%`,
+              width: horizontal ? `${Math.abs(to.x - from.x)}%` : 4,
+              height: horizontal ? 4 : `${Math.abs(to.y - from.y)}%`,
+              transform: horizontal ? 'translateY(-50%)' : 'translateX(-50%)',
+            }}
+          >
+            <div
+              className="h-full w-full bg-emerald-500"
+              style={{
+                transform: horizontal ? `scaleX(${lit ? 1 : 0})` : `scaleY(${lit ? 1 : 0})`,
+                transformOrigin: grow,
+                transition: 'transform 600ms ease-out',
+              }}
+            />
+          </div>
+        )
+      })}
+      {label && (
+        <p className="pointer-events-none absolute inset-x-[27%] top-1/2 -translate-y-1/2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+          {label}
+        </p>
+      )}
+      {NODES.map((_, i) => (
+        <div
+          key={i}
+          className="absolute"
+          style={{
+            left: `${layout.pos[i].x}%`,
+            top: `${layout.pos[i].y}%`,
+            width: `${w}%`,
+            height: h,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <Box i={i} state={stateOf(i)} picked={shown === i} onPick={() => onPick(i)} />
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -184,15 +252,7 @@ export function YourOrder({
 
   const stateOf = (i: number): 'idle' | 'done' | 'active' | 'later' =>
     !order ? 'idle' : i === current ? 'active' : i <= reached ? 'done' : 'later'
-  const passed = (i: number) => !!order && i <= reached // the arrow into box i is lit
-
-  // the real moment each box was reached, as time since you pressed the button
-  const at = (i: number): string | null => {
-    if (!order) return null
-    const real = [order.sentAt, trace?.received_ms ?? order.ackedAt, order.ackedAt, order.ackedAt, firstFill, firstFill, trace?.settled_ms ?? firstFill, trace?.settled_ms ?? firstFill][i]
-    return real ? (i === 0 ? 'start' : `+${duration(real - order.sentAt)}`) : null
-  }
-
+  
   const verb = order?.side === 'buy' ? 'buy' : 'sell'
   const hs = fills.some((f) => f.house)
   const who = (f: { house?: boolean; counterparty?: string | null }) =>
@@ -235,9 +295,9 @@ export function YourOrder({
   if (order) {
     log.push({ ts: order.sentAt, node: 0, text: `You sent your order: ${verb} ${order.qty} ${order.symbol}.` })
     if (trace?.received_ms && trace.received_ms !== order.sentAt) {
-      log.push({ ts: trace.received_ms, node: 1, text: 'The front desk got it and checked it.' })
+      log.push({ ts: trace.received_ms, node: 1, text: 'The HTTP Gateway got it and checked it.' })
     }
-    log.push({ ts: order.ackedAt, node: 2, text: 'The exchange approved it and wrote it down. It is on its way to the matching engine.' })
+    log.push({ ts: order.ackedAt, node: 2, text: 'The Order Gateway approved it and Kafka wrote it down. It is on its way to the Matching Engine.' })
     if (trace?.swept_ms) {
       log.push({
         ts: trace.swept_ms,
@@ -249,16 +309,13 @@ export function YourOrder({
       log.push({ ts: f.ts_ms ?? order.ackedAt, node: 4, text: `Matched: ${f.qty} shares at ${money(f.price)} with ${who(f)}.` })
     }
     if (settled) {
-      log.push({ ts: trace?.settled_ms ?? firstFill ?? order.ackedAt, node: 6, text: 'The money moved and your wallet was updated.' })
+      log.push({ ts: trace?.settled_ms ?? firstFill ?? order.ackedAt, node: 6, text: 'The Ledger moved the money and your wallet was updated.' })
     }
   }
   const visible = log.filter((l) => live || l.node <= reached).sort((a, b) => b.ts - a.ts)
 
   const shown = picked ?? (current >= 0 ? current : settled ? 7 : null)
   const side = order?.side === 'buy' ? BUY_TEXT : SELL_TEXT
-  const box = (i: number) => (
-    <Box i={i} state={stateOf(i)} time={at(i)} picked={shown === i} onPick={() => setPicked(picked === i ? null : i)} />
-  )
 
   return (
     <div className="space-y-4" id="your-order">
@@ -360,53 +417,22 @@ export function YourOrder({
           )}
         </div>
 
-        {/* wide screens: out along the top, down into the engine, back along the bottom to you */}
-        <div className="hidden md:block">
-          <div className="grid grid-cols-[1fr_28px_1fr_28px_1fr_28px_1fr] grid-rows-[22px_104px_30px_104px_22px]">
-            <p className="col-span-7 row-start-1 pb-1 text-center text-[11px] font-medium uppercase tracking-wide text-zinc-400">
-              Your order goes out
-            </p>
-            <div className="col-start-1 row-start-2">{box(0)}</div>
-            <div className="col-start-2 row-start-2"><Arrow dir="right" on={passed(1)} /></div>
-            <div className="col-start-3 row-start-2">{box(1)}</div>
-            <div className="col-start-4 row-start-2"><Arrow dir="right" on={passed(2)} /></div>
-            <div className="col-start-5 row-start-2">{box(2)}</div>
-            <div className="col-start-6 row-start-2"><Arrow dir="right" on={passed(3)} /></div>
-            <div className="col-start-7 row-start-2">{box(3)}</div>
-            <div className="col-start-7 row-start-3"><Arrow dir="down" on={passed(4)} /></div>
-            <div className="col-start-7 row-start-4">{box(4)}</div>
-            <div className="col-start-6 row-start-4"><Arrow dir="left" on={passed(5)} /></div>
-            <div className="col-start-5 row-start-4">{box(5)}</div>
-            <div className="col-start-4 row-start-4"><Arrow dir="left" on={passed(6)} /></div>
-            <div className="col-start-3 row-start-4">{box(6)}</div>
-            <div className="col-start-2 row-start-4"><Arrow dir="left" on={passed(7)} /></div>
-            <div className="col-start-1 row-start-4">{box(7)}</div>
-            <div className="col-start-1 row-start-3"><Arrow dir="up" on={passed(7)} /></div>
-            <p className="col-span-7 row-start-5 pt-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-zinc-400">
-              The result comes back to you
-            </p>
-          </div>
-        </div>
-
-        {/* phones: down the left side into the engine, back up the right side to you */}
-        <div className="grid grid-cols-[1fr_24px_1fr] grid-rows-[112px_24px_112px_24px_112px_24px_112px] md:hidden">
-          <div className="col-start-1 row-start-1">{box(0)}</div>
-          <div className="col-start-2 row-start-1"><Arrow dir="left" on={passed(7)} /></div>
-          <div className="col-start-3 row-start-1">{box(7)}</div>
-          <div className="col-start-1 row-start-2"><Arrow dir="down" on={passed(1)} /></div>
-          <div className="col-start-3 row-start-2"><Arrow dir="up" on={passed(7)} /></div>
-          <div className="col-start-1 row-start-3">{box(1)}</div>
-          <div className="col-start-3 row-start-3">{box(6)}</div>
-          <div className="col-start-1 row-start-4"><Arrow dir="down" on={passed(2)} /></div>
-          <div className="col-start-3 row-start-4"><Arrow dir="up" on={passed(6)} /></div>
-          <div className="col-start-1 row-start-5">{box(2)}</div>
-          <div className="col-start-3 row-start-5">{box(5)}</div>
-          <div className="col-start-1 row-start-6"><Arrow dir="down" on={passed(3)} /></div>
-          <div className="col-start-3 row-start-6"><Arrow dir="up" on={passed(5)} /></div>
-          <div className="col-start-1 row-start-7">{box(3)}</div>
-          <div className="col-start-2 row-start-7"><Arrow dir="right" on={passed(4)} /></div>
-          <div className="col-start-3 row-start-7">{box(4)}</div>
-        </div>
+        {/* the trip as one ring: out along the top, down into the engine, back along the bottom to you */}
+        {(() => {
+          const label = order ? (matched ? `Matched in ${duration(matchedIn ?? 0)}` : 'Waiting for a match') : 'Place an order to light this up'
+          const onPick = (i: number) => setPicked(picked === i ? null : i)
+          const done = !!order && reached === NODES.length - 1 && current < 0
+          return (
+            <>
+              <div className="hidden md:block">
+                <Ring layout={WIDE} reached={reached} done={done} stateOf={stateOf} shown={shown} onPick={onPick} label={label} />
+              </div>
+              <div className="md:hidden">
+                <Ring layout={NARROW} reached={reached} done={done} stateOf={stateOf} shown={shown} onPick={onPick} label={null} />
+              </div>
+            </>
+          )
+        })()}
 
         {shown !== null && order && (
           <motion.div
