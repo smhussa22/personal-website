@@ -9,6 +9,7 @@ type Project = {
   description: string
   link: string
   video?: string
+  videoLink?: string // where clicking the video goes
   image?: string
   badge?: Badge
   id: string
@@ -44,8 +45,10 @@ export const PROJECTS: Project[] = [
   },
   {
     name: 'Maroof Street',
-    description: 'A distributed mini stock exchange built around my C++ matching engine, where simulated accounts trade real symbols using live market data.',
+    description: 'A distributed mini stock exchange built around my C++ matching engine, where five trading bots and your own orders trade through Kafka, Postgres and Redis.',
     link: 'https://github.com/smhussa22/maroof-street',
+    video: '/demos/maroofstreet.mp4',
+    videoLink: 'https://syedmaroofhussain.com/maroof-street',
     id: 'project2',
   },
   {

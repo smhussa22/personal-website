@@ -23,7 +23,7 @@ const THEMES_OPTIONS = [
   },
 ]
 
-function ThemeSwitch() {
+export function ThemeSwitch() {
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 

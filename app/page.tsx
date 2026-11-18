@@ -207,7 +207,13 @@ export default function Personal() {
                 )}
                 <div className="relative h-[240px] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
                   {project.video ? (
-                    <ProjectVideo src={project.video} title={project.name} />
+                    project.videoLink ? (
+                      <a href={project.videoLink} aria-label={`Open ${project.name}`} className="block h-full w-full">
+                        <ProjectVideo src={project.video} title={project.name} />
+                      </a>
+                    ) : (
+                      <ProjectVideo src={project.video} title={project.name} />
+                    )
                   ) : project.image ? (
                     <Image
                       src={project.image}

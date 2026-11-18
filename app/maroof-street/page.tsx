@@ -97,7 +97,7 @@ export default function MaroofStreet() {
 
   return (
     <motion.main
-      className="relative left-1/2 w-[min(100vw-2rem,64rem)] -translate-x-1/2 space-y-8 pb-16"
+      className="w-full space-y-8"
       variants={VARIANTS_CONTAINER}
       initial="hidden"
       animate="visible"
