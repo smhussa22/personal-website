@@ -134,3 +134,51 @@ export const SOCIAL_LINKS: SocialLink[] = [
 ]
 
 export const EMAIL = 'syedmaroofhuss@gmail.com'
+
+// Write-up pages at /projects/{slug}. Leave gif empty until the sped-up demo exists; the page shows a placeholder square.
+type ProjectPage = {
+  slug: string
+  name: string
+  description: string
+  gif?: string
+  github: string
+  what: string
+  why: string
+  mistakes: string
+  differently: string
+}
+
+const PLACEHOLDER = 'Placeholder text. This section will be written once the project is finished.'
+
+export const PROJECT_PAGES: ProjectPage[] = [
+  {
+    slug: 'fluid-simulation',
+    name: 'Real-Time 3D Fluid Simulation',
+    description: 'Placeholder description of the fluid simulation.',
+    github: 'https://github.com/smhussa22/3d-fluid-simulation',
+    what: PLACEHOLDER,
+    why: PLACEHOLDER,
+    mistakes: PLACEHOLDER,
+    differently: PLACEHOLDER,
+  },
+  {
+    slug: 'soft-body-physics-engine',
+    name: 'Soft Body Physics Engine',
+    description: 'Placeholder description of the soft body physics engine.',
+    github: 'https://github.com/smhussa22/soft-body-physics-engine',
+    what: PLACEHOLDER,
+    why: PLACEHOLDER,
+    mistakes: PLACEHOLDER,
+    differently: PLACEHOLDER,
+  },
+  {
+    slug: 'path-tracer',
+    name: 'Path Tracer',
+    description: 'Placeholder description of the path tracer.',
+    github: 'https://github.com/smhussa22/path-tracer',
+    what: PLACEHOLDER,
+    why: PLACEHOLDER,
+    mistakes: PLACEHOLDER,
+    differently: PLACEHOLDER,
+  },
+]
