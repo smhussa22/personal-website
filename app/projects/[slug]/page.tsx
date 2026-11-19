@@ -30,7 +30,7 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <main className="space-y-8 pb-16">
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200/50 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/50">
+      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-zinc-200/50 ring-inset dark:bg-zinc-900 dark:ring-zinc-800/50">
         {project.gif ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={project.gif} alt={`${project.name} demo`} className="h-full w-full object-cover" />
